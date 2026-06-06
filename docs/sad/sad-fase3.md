@@ -2,15 +2,21 @@
 
 ## 1. Visão Arquitetural
 
-A FinTech Wallet é uma plataforma de gestão financeira pessoal para pagamentos, transferências, controle de despesas, notificações e relatórios financeiros. A arquitetura final da Fase 3 adota microsserviços, comunicação híbrida REST e RabbitMQ, autenticação centralizada com Keycloak, API Gateway Kong, PostgreSQL por serviço e implantação em AWS EC2.
+A FinTech Wallet é uma plataforma de gestão financeira pessoal para pagamentos, transferências, controle de despesas, notificações e relatórios financeiros. A arquitetura final documentada neste SAD adota microsserviços, comunicação híbrida REST e RabbitMQ, autenticação centralizada com Keycloak, API Gateway Kong, PostgreSQL por serviço e implantação em AWS EC2.
 
 A decisão preserva a diretriz da Fase 2: cada microsserviço deve organizar seu núcleo de negócio com Arquitetura Hexagonal, mantendo domínio isolado de infraestrutura, frameworks, banco de dados, mensageria e provedores externos.
 
 O objetivo arquitetural é permitir evolução independente dos módulos, reduzir impacto de falhas, proteger dados financeiros sensíveis e sustentar crescimento gradual de carga.
 
-## 2. Escopo
+## 2. Estado Atual na Fase 4
 
-Este SAD documenta a arquitetura da Fase 3, incluindo:
+Embora o artefato seja entregue no caminho solicitado pelo enunciado como `docs/sad/sad-fase3.md`, o conteúdo descreve o estado arquitetural alvo consolidado para a Fase 4: uma plataforma preparada para implementação incremental em microsserviços, com decisões de cloud, segurança, comunicação, resiliência e persistência já documentadas.
+
+Esse estado atual não representa apenas uma intenção genérica. Ele define containers, responsabilidades, integrações, padrões de falha, fronteiras de dados e critérios de execução local. A implementação futura deve seguir esta documentação como contrato arquitetural.
+
+## 3. Escopo
+
+Este SAD documenta a arquitetura consolidada para a evolução da FinTech Wallet, incluindo:
 
 - visão de contexto;
 - visão de containers;
@@ -24,7 +30,7 @@ Este SAD documenta a arquitetura da Fase 3, incluindo:
 
 Não fazem parte deste documento detalhes de implementação de código, modelo físico completo de banco de dados ou configuração final de pipeline CI/CD.
 
-## 3. Requisitos Funcionais
+## 4. Requisitos Funcionais
 
 RF01 - O usuário deve autenticar-se com segurança antes de acessar recursos financeiros.
 
@@ -42,7 +48,7 @@ RF07 - O sistema deve gerar relatórios financeiros por período e categoria.
 
 RF08 - Administradores devem gerenciar perfis, permissões e políticas de acesso.
 
-## 4. Requisitos Não Funcionais
+## 5. Requisitos Não Funcionais
 
 ### Segurança
 
@@ -74,7 +80,7 @@ O desempenho é protegido por comunicação síncrona apenas onde necessário, p
 
 Confiabilidade é tratada por idempotência em consumidores, retry com backoff em operações seguras, persistência transacional por serviço, DLQs no RabbitMQ e trilhas de auditoria no Transaction Service.
 
-## 5. Visão C4 Context
+## 6. Visão C4 Context
 
 ```mermaid
 C4Context
@@ -93,7 +99,7 @@ Rel(fintech, bank, "Solicita autorização de pagamento", "HTTPS")
 Rel(fintech, email, "Envia notificações", "HTTPS")
 ```
 
-## 6. Visão C4 Container
+## 7. Visão C4 Container
 
 ```mermaid
 C4Container
@@ -144,7 +150,7 @@ Rel(report, rabbitmq, "Atualiza projeções financeiras", "AMQP")
 Rel(notification, email, "Entrega mensagens", "HTTPS")
 ```
 
-## 7. Microsserviços
+## 8. Microsserviços
 
 ### Wallet Service
 
@@ -233,7 +239,7 @@ Fluxos:
 - Authorization Code + PKCE para usuários finais.
 - Client Credentials para comunicação serviço-serviço.
 
-## 8. Arquitetura Hexagonal nos Microsserviços
+## 9. Arquitetura Hexagonal nos Microsserviços
 
 Cada microsserviço de domínio deve seguir portas e adaptadores:
 
@@ -259,7 +265,7 @@ Portas principais preservadas:
 - NotificationPort
 - AuthPort
 
-## 9. Cloud
+## 10. Cloud
 
 A estratégia de nuvem escolhida é IaaS com AWS EC2.
 
@@ -278,7 +284,7 @@ Trade-off principal:
 - EC2 oferece controle e clareza arquitetural.
 - O custo é maior responsabilidade operacional.
 
-## 10. Segurança
+## 11. Segurança
 
 ### OAuth2
 
@@ -337,7 +343,7 @@ Kong centraliza:
 
 O gateway não substitui validações internas. Cada serviço continua responsável por autorização de domínio.
 
-## 11. Database per Service
+## 12. Database per Service
 
 Cada microsserviço possui seu próprio banco PostgreSQL. Nenhum serviço acessa diretamente o banco de outro serviço.
 
@@ -354,7 +360,7 @@ Consequências:
 - relatórios dependem de projeções e eventos;
 - consistência eventual precisa ser aceita em dados derivados.
 
-## 12. Comunicação
+## 13. Comunicação
 
 ### REST
 
@@ -394,7 +400,7 @@ Cada evento deve ter:
 - schemaVersion;
 - payload.
 
-## 13. Circuit Breaker
+## 14. Circuit Breaker
 
 Circuit Breaker será aplicado a dependências remotas críticas:
 
@@ -411,7 +417,7 @@ Estados esperados:
 - Open: chamadas bloqueadas temporariamente.
 - Half-open: chamadas de teste para verificar recuperação.
 
-## 14. Bulkhead
+## 15. Bulkhead
 
 Bulkhead separa recursos por fluxo e dependência.
 
@@ -424,7 +430,7 @@ Exemplos:
 
 Isso impede que relatórios pesados ou notificações atrasadas esgotem recursos necessários para pagamento e autenticação.
 
-## 15. Retry com Backoff
+## 16. Retry com Backoff
 
 Retry com backoff será usado apenas em operações idempotentes. Pagamentos exigem chave de idempotência antes de qualquer retry.
 
@@ -436,7 +442,7 @@ Regras:
 - timeout global por operação;
 - logs e métricas por tentativa.
 
-## 16. Observabilidade
+## 17. Observabilidade
 
 A observabilidade mínima inclui:
 
@@ -449,7 +455,7 @@ A observabilidade mínima inclui:
 
 Sem observabilidade, os padrões de resiliência se tornam difíceis de operar com segurança.
 
-## 17. Trade-offs Arquiteturais
+## 18. Trade-offs Arquiteturais
 
 ### Microsserviços vs Monólito
 
@@ -473,7 +479,7 @@ O Report Service resolve esse problema com projeções derivadas de eventos.
 
 EC2 oferece controle e clareza de topologia. PaaS e Serverless reduzem operação, mas ocultam decisões importantes e podem limitar a execução completa da arquitetura proposta.
 
-## 18. Custo vs Desempenho
+## 19. Custo vs Desempenho
 
 A arquitetura permite otimizar custo e desempenho por serviço.
 
@@ -486,7 +492,7 @@ Trade-offs:
 - PostgreSQL por serviço aumenta isolamento, mas consome mais recursos.
 - RabbitMQ melhora absorção de picos, mas adiciona operação e monitoramento.
 
-## 19. Riscos e Mitigações
+## 20. Riscos e Mitigações
 
 | Risco | Impacto | Mitigação |
 |---|---:|---|
@@ -497,9 +503,9 @@ Trade-offs:
 | Banco de serviço indisponível | Alto | backup, health checks e estratégia de recuperação |
 | Relatórios inconsistentes | Médio | consistência eventual documentada e reprocessamento de eventos |
 
-## 20. Conclusão
+## 21. Conclusão
 
-A arquitetura da FinTech Wallet na Fase 3 adota microsserviços com fronteiras claras, domínio protegido por Arquitetura Hexagonal, segurança centralizada com Keycloak, comunicação híbrida e padrões explícitos de resiliência.
+A arquitetura da FinTech Wallet adota microsserviços com fronteiras claras, domínio protegido por Arquitetura Hexagonal, segurança centralizada com Keycloak, comunicação híbrida e padrões explícitos de resiliência.
 
 A solução atende aos RNFs prioritários ao combinar isolamento, autenticação forte, mensageria assíncrona, banco por serviço, Circuit Breaker, Bulkhead e implantação controlada em AWS EC2. As decisões assumem trade-offs reais: maior complexidade operacional em troca de melhor isolamento, escalabilidade e rastreabilidade para uma plataforma financeira.
 

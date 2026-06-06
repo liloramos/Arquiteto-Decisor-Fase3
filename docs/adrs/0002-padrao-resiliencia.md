@@ -12,6 +12,23 @@ Michael Nygard descreve que sistemas integrados podem falhar em cascata quando u
 
 ## Opções Avaliadas
 
+### API Gateway
+
+O API Gateway atua como ponto de entrada controlado para a plataforma. Na FinTech Wallet, Kong concentra roteamento, TLS, rate limiting, validação inicial de JWT, políticas de borda e coleta de métricas.
+
+Vantagens:
+
+- Reduz exposição direta dos microsserviços.
+- Aplica rate limiting e proteção contra abuso antes da carga chegar aos serviços.
+- Centraliza políticas transversais de borda.
+- Melhora observabilidade de tráfego externo.
+
+Desvantagens:
+
+- Torna-se componente crítico de disponibilidade.
+- Não substitui autorização de domínio dentro dos serviços.
+- Pode virar gargalo se não for monitorado e escalado.
+
 ### Circuit Breaker
 
 O Circuit Breaker monitora falhas em chamadas a dependências e interrompe novas tentativas quando a taxa de erro ou timeout excede um limite. O serviço chamador passa a falhar rapidamente ou executar fallback, evitando saturação.
@@ -64,7 +81,9 @@ Desvantagens:
 
 ## Decisão
 
-A FinTech Wallet adotará Circuit Breaker e Bulkhead como padrões principais de resiliência. Retry com Backoff será permitido apenas como padrão complementar, aplicado a operações idempotentes, com limite de tentativas, jitter e observabilidade.
+A FinTech Wallet adotará API Gateway, Circuit Breaker e Bulkhead como padrões principais de resiliência. Retry com Backoff será permitido apenas como padrão complementar, aplicado a operações idempotentes, com limite de tentativas, jitter e observabilidade.
+
+O API Gateway Kong será usado como primeira camada de proteção, limitando tráfego abusivo, validando tokens na borda e reduzindo exposição direta dos microsserviços.
 
 Circuit Breaker será usado em chamadas REST entre serviços e integrações externas, especialmente Payment Service para gateway bancário, Notification Service para provedor de e-mail/SMS e chamadas do API Gateway para serviços internos.
 
@@ -74,6 +93,8 @@ Bulkhead será usado para separar recursos por integração e criticidade. Fluxo
 
 Usar apenas Retry foi rejeitado porque retries indiscriminados podem piorar incidentes, multiplicando requisições contra dependências degradadas. Em sistemas financeiros, repetir pagamento sem idempotência forte também pode gerar duplicidade operacional.
 
+Usar apenas API Gateway foi rejeitado porque proteção de borda não resolve falhas internas entre microsserviços nem indisponibilidade de provedores externos. O gateway reduz exposição, mas Circuit Breaker e Bulkhead continuam necessários dentro da malha de serviços.
+
 Não aplicar padrões explícitos de resiliência foi rejeitado porque microsserviços aumentam chamadas remotas e tornam falhas parciais inevitáveis. A ausência desses padrões comprometeria disponibilidade e confiabilidade, dois RNFs prioritários.
 
 ## Consequências
@@ -82,6 +103,7 @@ Consequências positivas:
 
 - Menor risco de falhas em cascata.
 - Melhor proteção de recursos críticos.
+- Menor exposição direta dos serviços internos.
 - Resposta mais previsível quando dependências estão indisponíveis.
 - Maior aderência aos RNFs de disponibilidade e confiabilidade.
 
@@ -89,6 +111,7 @@ Consequências negativas:
 
 - Maior complexidade operacional.
 - Necessidade de métricas, alertas e ajuste contínuo.
+- Kong passa a ser componente crítico e precisa de health checks, logs e escala.
 - Alguns usuários podem receber falha rápida em vez de aguardar recuperação lenta.
 
 ## Trade-offs
@@ -96,6 +119,8 @@ Consequências negativas:
 A decisão privilegia estabilidade sistêmica em vez de insistir indefinidamente em uma operação degradada. O fail fast pode parecer menos amigável em uma requisição isolada, mas protege a plataforma inteira.
 
 O uso de Bulkhead aumenta a configuração inicial, porém reduz o risco de uma fila ou dependência consumir todos os recursos compartilhados. Para uma plataforma financeira, essa proteção é mais importante que a máxima utilização de recursos em cenários normais.
+
+O API Gateway simplifica políticas transversais, mas introduz um ponto de concentração de tráfego. O trade-off é aceitável porque a plataforma ganha controle de borda, desde que Kong seja tratado como componente crítico e escalável.
 
 ## Referências
 

@@ -6,6 +6,8 @@ A FinTech Wallet é uma plataforma de gestão financeira pessoal orientada a mic
 
 A solução combina API Gateway, microsserviços independentes, mensageria assíncrona, autenticação centralizada com Keycloak, PostgreSQL por serviço e implantação em AWS EC2 via Docker Compose. Essa escolha equilibra controle operacional, simplicidade acadêmica de execução e aderência a padrões de mercado.
 
+Estado atual na Fase 4: o projeto encontra-se documentado como uma arquitetura de referência pronta para implementação incremental. A Fase 3 consolida as decisões arquiteturais de cloud, microsserviços, resiliência e comunicação; a visão de Fase 4 representa o estado alvo do sistema após essa evolução, com os containers, padrões e responsabilidades definidos neste repositório.
+
 ## 2. Problema de Negócio
 
 Usuários de carteiras digitais esperam pagamentos confiáveis, baixa latência, proteção contra acessos indevidos e visibilidade clara de suas movimentações financeiras. Falhas em serviços de pagamento, autenticação ou notificação não podem comprometer toda a plataforma.
@@ -110,6 +112,10 @@ gold-plating/
 ├── api-governance.md
 └── sequence-diagrams.md
 
+src/
+└── README.md
+
+.gitignore
 README.md
 ```
 
