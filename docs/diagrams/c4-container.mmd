@@ -1,0 +1,46 @@
+C4Container
+title FinTech Wallet - C4 Container
+
+Person(user, "Usuário", "Pessoa que realiza pagamentos, transferências e acompanha despesas.")
+Person(admin, "Administrador", "Opera configurações, perfis e políticas da plataforma.")
+
+System_Boundary(fintech, "FinTech Wallet") {
+  Container(kong, "API Gateway Kong", "Kong", "Roteamento, rate limiting, TLS, validação de tokens e políticas de borda.")
+  Container(auth, "Auth Service", "Keycloak", "OAuth2/OIDC, MFA, RBAC e JWT RS256.")
+  Container(wallet, "Wallet Service", "Microsserviço", "Carteiras, saldo e regras de movimentação.")
+  Container(payment, "Payment Service", "Microsserviço", "Pagamentos e integração bancária.")
+  Container(transaction, "Transaction Service", "Microsserviço", "Transações, transferências e auditoria.")
+  Container(notification, "Notification Service", "Microsserviço", "Notificações e alertas.")
+  Container(report, "Report Service", "Microsserviço", "Relatórios financeiros.")
+  ContainerQueue(rabbitmq, "RabbitMQ", "Message Broker", "Eventos assíncronos.")
+
+  ContainerDb(walletdb, "Wallet DB", "PostgreSQL", "Dados de carteira.")
+  ContainerDb(paymentdb, "Payment DB", "PostgreSQL", "Dados de pagamento.")
+  ContainerDb(transactiondb, "Transaction DB", "PostgreSQL", "Transações e auditoria.")
+  ContainerDb(notificationdb, "Notification DB", "PostgreSQL", "Histórico de notificações.")
+  ContainerDb(reportdb, "Report DB", "PostgreSQL", "Projeções e agregados.")
+}
+
+System_Ext(bank, "Gateway Bancário Externo", "Processador externo de pagamentos.")
+System_Ext(email, "Provedor de E-mail/SMS", "Canal externo de notificação.")
+
+Rel(user, kong, "Acessa APIs", "HTTPS")
+Rel(admin, kong, "Opera plataforma", "HTTPS")
+Rel(kong, auth, "Autenticação e autorização", "OAuth2/OIDC")
+Rel(kong, wallet, "Carteira", "REST/JSON")
+Rel(kong, payment, "Pagamento", "REST/JSON")
+Rel(kong, transaction, "Transações", "REST/JSON")
+Rel(kong, report, "Relatórios", "REST/JSON")
+Rel(payment, bank, "Autoriza pagamento", "HTTPS")
+Rel(notification, email, "Entrega mensagem", "HTTPS")
+
+Rel(wallet, walletdb, "Persiste", "SQL")
+Rel(payment, paymentdb, "Persiste", "SQL")
+Rel(transaction, transactiondb, "Persiste", "SQL")
+Rel(notification, notificationdb, "Persiste", "SQL")
+Rel(report, reportdb, "Persiste", "SQL")
+
+Rel(payment, rabbitmq, "Publica eventos de pagamento", "AMQP")
+Rel(transaction, rabbitmq, "Consome eventos de pagamento", "AMQP")
+Rel(notification, rabbitmq, "Consome eventos transacionais", "AMQP")
+Rel(report, rabbitmq, "Consome eventos para projeções", "AMQP")

@@ -1,0 +1,14 @@
+C4Context
+title FinTech Wallet - C4 Context
+
+Person(user, "Usuário", "Pessoa que realiza pagamentos, transferências e acompanha despesas.")
+Person(admin, "Administrador", "Pessoa responsável por administração operacional e políticas de acesso.")
+
+System(fintech, "FinTech Wallet", "Plataforma de gestão financeira pessoal.")
+System_Ext(bank, "Gateway Bancário Externo", "Autoriza e liquida pagamentos.")
+System_Ext(email, "Provedor de E-mail/SMS", "Entrega notificações transacionais.")
+
+Rel(user, fintech, "Usa para carteira, pagamentos, despesas e relatórios", "HTTPS")
+Rel(admin, fintech, "Administra usuários, perfis e monitoração", "HTTPS")
+Rel(fintech, bank, "Solicita autorização de pagamento", "HTTPS")
+Rel(fintech, email, "Envia notificações", "HTTPS")
